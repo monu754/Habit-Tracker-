@@ -42,22 +42,6 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
     python app.py
     ```
 
-## 📦 How to Build the Executable
-To bundle this project into a single standalone `.exe` for Windows:
-
-1.  **Install PyInstaller:**
-    ```bash
-    pip install pyinstaller
-    ```
-2.  **Run the Build Command:**
-    (Replace `app_icon.ico` with your actual icon file)
-    ```bash
-    pyinstaller --noconsole --onefile --icon=app_icon.ico --name="HabitTracker" app.py
-    ```
-3.  **Locate your App:**
-    * The finished executable will be in the `dist/` folder.
-    * You can safely delete the `build/` folder and `HabitTracker.spec` file.
-
 ## 🛠️ Built With
 * **PySide6:** For a modern, high-performance Graphical User Interface.
 * **Matplotlib:** For rendering the yearly consistency trend graph.
