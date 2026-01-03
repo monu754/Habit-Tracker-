@@ -51,18 +51,14 @@ class HabitModel(QAbstractTableModel):
         self._dates = dates
         self._today_idx = today_idx 
 
-    def rowCount(self, parent=None): return len(HABITS) + 2
+    # INCREASED ROW COUNT: +1 for Day Names (Mon, Tue)
+    def rowCount(self, parent=None): return len(HABITS) + 3 
     def columnCount(self, parent=None): return DAYS
 
     def data(self, index, role=Qt.DisplayRole):
         r, c = index.row(), index.column()
         
-        # Text Color
-        if role == Qt.ForegroundRole: 
-            if r == 0: return QColor("#546E7A") # Month Color
-            return QColor("#000000") # Force Black for other text
-
-        # ROW 0: Month Names
+        # --- ROW 0: MONTH NAMES ---
         if r == 0:
             if role == Qt.DisplayRole:
                 d = self._dates[c]
@@ -71,26 +67,42 @@ class HabitModel(QAbstractTableModel):
             if role == Qt.BackgroundRole:
                 return QColor(MONTH_COLORS.get(self._dates[c].month, "#FFFFFF"))
             if role == Qt.FontRole:
-                f = QFont("Segoe UI", 10, QFont.Bold)
-                return f
+                f = QFont("Segoe UI", 10, QFont.Bold); return f
             if role == Qt.TextAlignmentRole: return Qt.AlignCenter
+            if role == Qt.ForegroundRole: return QColor("#546E7A")
 
-        # ROW 1: Day Numbers
+        # --- ROW 1: DAY NUMBERS (01, 02) ---
         if r == 1:
             if role == Qt.DisplayRole: return self._dates[c].strftime("%d")
             if role == Qt.BackgroundRole:
-                if c == self._today_idx: return QColor("#FFD700") # Gold Today
-                return QColor("#F4F6F8") # Grey Header
+                if c == self._today_idx: return QColor("#FFD700") 
+                return QColor("#F4F6F8")
             if role == Qt.FontRole:
                 return QFont("Segoe UI", 9, QFont.Bold)
             if role == Qt.TextAlignmentRole: return Qt.AlignCenter
+            if role == Qt.ForegroundRole: return QColor("#000000")
 
-        # HABIT ROWS
-        habit_idx = r - 2
+        # --- ROW 2: DAY NAMES (Mon, Tue) ---
+        if r == 2:
+            if role == Qt.DisplayRole: return self._dates[c].strftime("%a") # Mon, Tue
+            if role == Qt.BackgroundRole:
+                if c == self._today_idx: return QColor("#FFF176") # Lighter Gold
+                return QColor("#FFFFFF")
+            if role == Qt.FontRole:
+                f = QFont("Segoe UI", 8); return f
+            if role == Qt.TextAlignmentRole: return Qt.AlignCenter
+            
+            # Highlight Weekends in Red
+            if role == Qt.ForegroundRole:
+                day_idx = self._dates[c].weekday() # 5=Sat, 6=Sun
+                if day_idx >= 5: return QColor("#E74C3C")
+                return QColor("#909497")
+
+        # --- HABIT ROWS (Row 3+) ---
+        habit_idx = r - 3 # Adjusted for extra header row
         if role == Qt.BackgroundRole:
-            if self._data[habit_idx][c] == 1: return QColor("#2ECC71") # Green
-            if c == self._today_idx: return QColor("#FFF9C4") # Today Highlight
-            # Alternating Row Colors
+            if self._data[habit_idx][c] == 1: return QColor("#2ECC71")
+            if c == self._today_idx: return QColor("#FFF9C4")
             return QColor("#FFFFFF") if habit_idx % 2 == 0 else QColor("#FAFAFA")
         
         if role == Qt.ToolTipRole:
@@ -98,18 +110,18 @@ class HabitModel(QAbstractTableModel):
         return None
 
     def headerData(self, section, orientation, role):
-        # VERTICAL HEADER (Sidebar)
         if orientation == Qt.Vertical and role == Qt.DisplayRole:
-            if section == 0: return ""
-            if section == 1: return "DAY"
-            if 0 <= section - 2 < len(HABITS):
-                return HABITS[section - 2]
+            if section == 0: return "" # Month
+            if section == 1: return "DAY" # Number
+            if section == 2: return "WEEK" # Name
+            if 0 <= section - 3 < len(HABITS):
+                return HABITS[section - 3]
         return None
 
     def toggle(self, index):
         r, c = index.row(), index.column()
-        if r < 2: return 
-        habit_idx = r - 2
+        if r < 3: return # Don't click headers
+        habit_idx = r - 3
         self._data[habit_idx][c] = 1 - self._data[habit_idx][c]
         self.dataChanged.emit(index, index)
 
@@ -117,7 +129,6 @@ class HabitModel(QAbstractTableModel):
 class KPICard(QFrame):
     def __init__(self, title, accent_color="#3498DB"):
         super().__init__()
-        # Glassmorphism Style
         self.setStyleSheet(f"""
             QFrame {{ 
                 background-color: white;
@@ -177,84 +188,46 @@ class HabitApp(QWidget):
         self.setWindowTitle(f"Habit Dashboard – {YEAR}")
         self.resize(1350, 900)
         
-        # 1. MAIN SCROLL LAYOUT
-        main_layout_outer = QVBoxLayout(self)
-        main_layout_outer.setContentsMargins(0, 0, 0, 0)
+        # 1. SETUP MAIN SCROLL AREA (Stability Fix)
+        self.main_scroll = QScrollArea(self)
+        self.main_scroll.setWidgetResizable(True)
+        self.main_scroll.setStyleSheet("QScrollArea { border: none; background-color: #F8F9FA; }")
         
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background-color: #F8F9FA; }")
-        
-        content_widget = QWidget()
-        content_widget.setStyleSheet("background-color: #F8F9FA;") 
-        self.layout = QVBoxLayout(content_widget)
+        self.container = QWidget()
+        self.container.setStyleSheet("background-color: #F8F9FA;")
+        self.layout = QVBoxLayout(self.container)
         self.layout.setContentsMargins(30, 30, 30, 30)
         self.layout.setSpacing(25)
         
-        scroll.setWidget(content_widget)
-        main_layout_outer.addWidget(scroll)
+        self.main_scroll.setWidget(self.container)
 
         # 2. HEADER
         header_frame = QFrame()
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(0, 0, 0, 0)
 
-        title = QLabel(f"Habit Dashboard {YEAR}")
-        title.setStyleSheet("font-size: 34px; font-weight: 800; color: #1A252F; font-family: 'Segoe UI', sans-serif;")
+        title = QLabel(f"Dashboard {YEAR}")
+        title.setStyleSheet("font-size: 34px; font-weight: 800; color: #1A252F; font-family: 'Segoe UI';")
         
-        # FIXED: Date Badge with Emoji
-        date_str = f"📅  {self.current_date.strftime('%B %d, %Y')}"
-        date_lbl = QLabel(date_str)
-        # Blue pill style for better visibility
-        date_lbl.setStyleSheet("""
-            background-color: #E3F2FD; 
-            color: #1565C0; 
-            font-size: 14px; 
-            font-weight: 700;
-            padding: 10px 18px; 
-            border-radius: 20px;
-            border: 1px solid #BBDEFB;
-        """)
+        date_lbl = QLabel(f"📅  {self.current_date.strftime('%B %d, %Y')}")
+        date_lbl.setStyleSheet("background-color: #E3F2FD; color: #1565C0; font-size: 14px; font-weight: 700; padding: 10px 18px; border-radius: 20px; border: 1px solid #BBDEFB;")
 
-        # Export Button
         btn_export = QPushButton(" Export Report  ▼ ")
         btn_export.setCursor(Qt.PointingHandCursor)
         apply_shadow(btn_export, blur=8, offset=3)
-        btn_export.setStyleSheet("""
-            QPushButton {
-                background-color: #2980B9;
-                color: white;
-                border-radius: 8px;
-                padding: 10px 24px;
-                font-size: 14px;
-                font-weight: 700;
-                border: none;
-            }
-            QPushButton:hover { background-color: #3498DB; margin-top: -1px; }
-            QPushButton::menu-indicator { image: none; }
-        """)
+        btn_export.setStyleSheet("QPushButton { background-color: #2980B9; color: white; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 700; border: none; } QPushButton:hover { background-color: #3498DB; margin-top: -1px; } QPushButton::menu-indicator { image: none; }")
         
         menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu { background-color: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 6px; }
-            QMenu::item { padding: 8px 25px; color: #333; font-size: 13px; }
-            QMenu::item:selected { background-color: #E3F2FD; color: #1565C0; border-radius: 4px; }
-        """)
+        menu.setStyleSheet("QMenu { background-color: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 6px; } QMenu::item { padding: 8px 25px; color: #333; font-size: 13px; } QMenu::item:selected { background-color: #E3F2FD; color: #1565C0; border-radius: 4px; }")
         
         action_csv = QAction("CSV (Raw Data)", self)
-        action_csv.setIcon(self.create_color_icon("#27AE60"))
-        action_csv.triggered.connect(self.export_csv)
+        action_csv.setIcon(self.create_color_icon("#27AE60")); action_csv.triggered.connect(self.export_csv)
         action_pdf = QAction("PDF (Visual Report)", self)
-        action_pdf.setIcon(self.create_color_icon("#E74C3C"))
-        action_pdf.triggered.connect(self.export_pdf)
+        action_pdf.setIcon(self.create_color_icon("#E74C3C")); action_pdf.triggered.connect(self.export_pdf)
         menu.addAction(action_csv); menu.addAction(action_pdf)
         btn_export.setMenu(menu)
 
-        header_layout.addWidget(title)
-        header_layout.addStretch()
-        header_layout.addWidget(date_lbl)
-        header_layout.addSpacing(15)
-        header_layout.addWidget(btn_export)
+        header_layout.addWidget(title); header_layout.addStretch(); header_layout.addWidget(date_lbl); header_layout.addSpacing(15); header_layout.addWidget(btn_export)
         self.layout.addWidget(header_frame)
 
         # 3. KPI CARDS
@@ -264,48 +237,32 @@ class HabitApp(QWidget):
         self.card_streak = KPICard("Current Streak", "#F39C12")
         self.card_weekly = KPICard("Weekly Average", "#9B59B6")
         self.card_monthly = KPICard("Monthly Average", "#2ECC71")
-        
-        for c in [self.card_today, self.card_streak, self.card_weekly, self.card_monthly]:
-            kpi_layout.addWidget(c)
+        for c in [self.card_today, self.card_streak, self.card_weekly, self.card_monthly]: kpi_layout.addWidget(c)
         kpi_layout.addStretch()
         self.layout.addLayout(kpi_layout)
 
-        # 4. GRID CONTAINER
+        # 4. GRID CONTAINER (Fixed Height for Stability)
         grid_container = QFrame()
         grid_container.setStyleSheet("background-color: white; border-radius: 12px; border: 1px solid #E0E0E0;")
         apply_shadow(grid_container, blur=15, offset=5, color="#08000000")
         
         grid_layout_inner = QVBoxLayout(grid_container)
-        grid_layout_inner.setContentsMargins(0, 0, 0, 0) # Remove padding for edge-to-edge table
+        grid_layout_inner.setContentsMargins(0, 0, 0, 0)
 
         self.table = QTableView()
         self.model = HabitModel(self.habit_data, self.dates, self.today_idx)
         self.table.setModel(self.model)
         
-        # FIXED: Sidebar Styling (Vertical Header)
+        # Sizing and Styling
+        row_height = 45 # Slightly compact to fit more
         self.table.verticalHeader().setVisible(True)
         self.table.verticalHeader().setFixedWidth(140)
-        self.table.verticalHeader().setDefaultSectionSize(50)
+        self.table.verticalHeader().setDefaultSectionSize(row_height)
+        
+        # Explicit Sidebar Styling
         self.table.setStyleSheet("""
-            QTableView { 
-                border: none; 
-                background-color: white;
-                gridline-color: #F1F1F1;
-                border-radius: 12px;
-            }
-            /* Explicit Sidebar Styling */
-            QHeaderView::section {
-                background-color: white;
-                color: #2C3E50; /* Dark Grey Text */
-                padding-left: 20px;
-                border: none;
-                border-right: 1px solid #E0E0E0;
-                border-bottom: 1px solid #F5F5F5;
-                font-family: 'Segoe UI';
-                font-weight: 700;
-                font-size: 13px;
-                text-align: left;
-            }
+            QTableView { border: none; background-color: white; gridline-color: #F1F1F1; border-radius: 12px; }
+            QHeaderView::section { background-color: white; color: #2C3E50; padding-left: 20px; border: none; border-right: 1px solid #E0E0E0; border-bottom: 1px solid #F5F5F5; font-weight: 700; font-size: 13px; text-align: left; }
         """)
         
         self.table.horizontalHeader().setVisible(False)
@@ -316,9 +273,12 @@ class HabitApp(QWidget):
         self.table.setFocusPolicy(Qt.NoFocus)
         self.table.clicked.connect(self.on_cell_clicked)
         
-        # Calculate precise height
-        total_height = (len(HABITS) + 2) * 50 + 5
-        self.table.setFixedHeight(total_height) 
+        # --- STABILITY LOGIC ---
+        # Height = (Habits + 3 Headers) * RowHeight + Padding
+        total_rows = len(HABITS) + 3 
+        calc_height = (total_rows * row_height) + 5
+        self.table.setFixedHeight(calc_height)
+        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed) # Prevent growing
 
         grid_layout_inner.addWidget(self.table)
         self.layout.addWidget(grid_container)
@@ -331,13 +291,18 @@ class HabitApp(QWidget):
         chart_layout = QVBoxLayout(chart_container)
         chart_layout.setContentsMargins(20, 20, 20, 20)
 
-        self.fig = Figure(figsize=(8, 3.5), dpi=100) # Increased Height
+        self.fig = Figure(figsize=(8, 3.5), dpi=100)
         self.fig.patch.set_facecolor('white')
         self.canvas = FigureCanvasQTAgg(self.fig)
         self.canvas.setFixedHeight(350) 
         
         chart_layout.addWidget(self.canvas)
         self.layout.addWidget(chart_container)
+
+        # 6. LAYOUT WRAPPER
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.addWidget(self.main_scroll)
 
         self.apply_month_spans()
         self.update_analytics()
@@ -382,18 +347,14 @@ class HabitApp(QWidget):
         
         ax.fill_between(range(DAYS), daily_avg, color='#3498DB', alpha=0.1)
         ax.plot(range(DAYS), daily_avg, color='#2980B9', linewidth=2.5)
-        
-        # FIXED: Title Padding and Layout
         ax.set_title("Yearly Consistency Trend", fontsize=12, fontweight='bold', color='#34495E', loc='left', pad=25)
-        self.fig.subplots_adjust(top=0.85, bottom=0.15, left=0.05, right=0.95) # Explicit margins
-        
+        self.fig.subplots_adjust(top=0.85, bottom=0.15, left=0.05, right=0.95)
         ax.set_ylim(0, 110); ax.set_xlim(0, DAYS)
         ax.spines['top'].set_visible(False); ax.spines['right'].set_visible(False); ax.spines['left'].set_visible(False)
         ax.spines['bottom'].set_color('#CFD8DC'); ax.spines['bottom'].set_linewidth(1.5)
         ax.tick_params(axis='x', colors='#7F8C8D', labelsize=9)
         ax.tick_params(axis='y', colors='#7F8C8D', labelsize=9)
         ax.grid(True, axis='y', linestyle='--', alpha=0.5, color='#ECEFF1')
-        
         self.canvas.draw()
 
     def export_csv(self):
@@ -431,7 +392,7 @@ class HabitApp(QWidget):
         except Exception as e: QMessageBox.critical(self, "Error", str(e))
 
 if __name__ == "__main__":
-    myappid = 'mycompany.habit.tracker.5.0' 
+    myappid = 'mycompany.habit.tracker.6.0' 
     try: ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except: pass
     app = QApplication(sys.argv)
