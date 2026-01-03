@@ -20,6 +20,7 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
     * **Best Streak:** Your longest run of "Perfect Days" (all habits completed).
     * **Weekly/Monthly Averages:** Rolling completion rates to track long-term trends.
 * **Data Visualization:** Integrated Matplotlib chart showing yearly consistency patterns with labeled axes.
+* **Export:** Export the data using pdf or CSV 
 * **Persistent Storage:** Automatically saves progress to a local `habit_data.json` file.
 
 ## 🚀 Installation & Usage
