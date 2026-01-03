@@ -28,6 +28,7 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
 ### For Users
 1.  Download the `HabitTracker.exe` from the [Releases](https://github.com/monu754/Habit-Tracker-/releases) section.
 2.  Run the executable. No Python installation required!
+3. Edit the habits and time-frame according to you by right-clicking on the habit
 
 ### For Developers
 1.  Clone the repository:
