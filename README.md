@@ -1,5 +1,7 @@
 # 🎯 Data-Driven Habit Tracker (2026)
 
+`![App Screenshot](image.png)`
+
 A sleek, desktop-based habit tracking application built with **Python**, **PySide6 (Qt)**, and **Matplotlib**. This tool allows users to track daily consistency across multiple habits and provides real-time analytical insights through a KPI dashboard and trend visualizations.
 
 ## ✨ Features
@@ -27,4 +29,17 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
 2. Install the Dependencies:
     ```bash
     pip install PySide6 matplotlib
-    
+
+3. Run the application:
+    ```bash
+    python app.py
+
+
+🛠️ Built With
+PySide6: For a modern, high-performance Graphical User Interface.
+
+Matplotlib: For rendering the yearly consistency trend graph.
+
+JSON: For lightweight, local data persistence.
+
+
