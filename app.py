@@ -10,7 +10,7 @@ from matplotlib.figure import Figure
 
 # --- CONFIGURATION ---
 YEAR = 2026
-HABITS = ["NFC", "Medit./Workout", "Reading", "Coding", "Sleep 8h"]
+HABITS = ["Workout", "Meditation", "Reading", "Coding", "Sleep 8h"]
 DAYS = 365
 DATA_FILE = "habit_data.json"
 
