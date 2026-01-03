@@ -31,7 +31,7 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
 ### For Developers
 1.  Clone the repository:
     ```bash
-    git clone [https://github.com/monu754/Habit-Tracker-.git](https://github.com/monu754/Habit-Tracker-.git)
+    git clone https://github.com/monu754/Habit-Tracker-.git
     ```
 2.  Install dependencies:
     ```bash
