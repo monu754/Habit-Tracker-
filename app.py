@@ -30,6 +30,25 @@ MONTH_COLORS = {
     9: "#E0F2F1", 10: "#FBE9E7", 11: "#EFEBE9", 12: "#E1F5FE"
 }
 
+# --- COLOR PALETTES ---
+THEME_LIGHT = {
+    "bg": "#F5F7FA", "card": "#FFFFFF", "text": "#1A252F", "text_sec": "#7F8C8D",
+    "border": "#E0E0E0", "hover": "#F0F2F5", "shadow": "#10000000",
+    "table_header": "#FAFAFA", "table_grid": "#F0F0F0", "scroll": "#BDBDBD",
+    "chart_bg": "#FFFFFF", "chart_fill": "#6B9BD1", "chart_line": "#5A8AC0",
+    "accent": "#3498DB", "success": "#4CAF50",
+    "tooltip_bg": "#FFFFFF", "tooltip_text": "#000000", "tooltip_border": "#CCCCCC" # Added Explicit Tooltip Colors
+}
+
+THEME_DARK = {
+    "bg": "#121212", "card": "#1E1E1E", "text": "#E0E0E0", "text_sec": "#A0A0A0",
+    "border": "#333333", "hover": "#2C2C2C", "shadow": "#50000000",
+    "table_header": "#252525", "table_grid": "#2C2C2C", "scroll": "#555555",
+    "chart_bg": "#1E1E1E", "chart_fill": "#3498DB", "chart_line": "#5DADE2",
+    "accent": "#5DADE2", "success": "#66BB6A",
+    "tooltip_bg": "#2C3E50", "tooltip_text": "#FFFFFF", "tooltip_border": "#1A252F" # Added Explicit Tooltip Colors
+}
+
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
@@ -71,39 +90,41 @@ class AnimatedButton(QPushButton):
         """)
         apply_shadow(self, blur=10, offset=4, color="#20000000")
 
-# --- CUSTOM DIALOG FOR ADDING/EDITING HABITS ---
+# --- CUSTOM DIALOG ---
 class HabitDialog(QDialog):
-    def __init__(self, parent=None, name="", time=""):
+    def __init__(self, parent=None, name="", time="", is_dark=False):
         super().__init__(parent)
         self.setWindowTitle("Habit Details")
         self.setFixedWidth(400)
+        self.is_dark = is_dark
+        theme = THEME_DARK if is_dark else THEME_LIGHT
         
-        self.setStyleSheet("""
-            QDialog { 
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #FFFFFF, stop:1 #F8F9FA);
+        self.setStyleSheet(f"""
+            QDialog {{ 
+                background-color: {theme['card']};
+                border: 1px solid {theme['border']};
                 border-radius: 16px;
-            }
-            QLabel { 
+            }}
+            QLabel {{ 
                 font-size: 13px; 
                 font-weight: 600; 
-                color: #2C3E50; 
+                color: {theme['text']}; 
                 padding: 5px 0;
-            }
-            QLineEdit { 
+            }}
+            QLineEdit {{ 
                 padding: 12px 16px; 
-                border: 2px solid #E0E0E0; 
+                border: 2px solid {theme['border']}; 
                 border-radius: 8px; 
-                background-color: #FFFFFF;
-                color: #2C3E50;
+                background-color: {theme['bg']};
+                color: {theme['text']};
                 font-size: 14px;
-                selection-background-color: #3498DB;
-            }
-            QLineEdit:focus {
-                border: 2px solid #3498DB;
-            }
-            QPushButton {
-                background-color: #3498DB;
+                selection-background-color: {theme['accent']};
+            }}
+            QLineEdit:focus {{
+                border: 2px solid {theme['accent']};
+            }}
+            QPushButton {{
+                background-color: {theme['accent']};
                 color: white;
                 border: none;
                 padding: 12px 24px;
@@ -111,22 +132,18 @@ class HabitDialog(QDialog):
                 font-weight: 700;
                 font-size: 13px;
                 min-width: 100px;
-            }
-            QPushButton:hover {
-                background-color: #2980B9;
-            }
-            QPushButton:pressed {
-                background-color: #1F618D;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {theme['chart_line']};
+            }}
         """)
         
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
         layout.setContentsMargins(30, 30, 30, 30)
         
-        # Title
         title_label = QLabel("✨ Define Your Habit")
-        title_label.setStyleSheet("font-size: 20px; font-weight: 800; color: #1A252F; padding: 0;")
+        title_label.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {theme['text']}; padding: 0;")
         layout.addWidget(title_label)
         
         form = QFormLayout()
@@ -158,19 +175,25 @@ class HabitDialog(QDialog):
 
 # --- DATA MODEL ---
 class HabitModel(QAbstractTableModel):
-    def __init__(self, data, habit_names, habit_times, dates, today_idx):
+    def __init__(self, data, habit_names, habit_times, dates, today_idx, is_dark=False):
         super().__init__()
         self._data = data
         self._habit_names = habit_names
         self._habit_times = habit_times
         self._dates = dates
         self._today_idx = today_idx 
+        self.is_dark = is_dark
+
+    def set_theme_mode(self, is_dark):
+        self.is_dark = is_dark
+        self.layoutChanged.emit()
 
     def rowCount(self, parent=None): return len(self._habit_names) + 3 
     def columnCount(self, parent=None): return DAYS
 
     def data(self, index, role=Qt.DisplayRole):
         r, c = index.row(), index.column()
+        theme = THEME_DARK if self.is_dark else THEME_LIGHT
         
         # --- ROW 0: MONTH NAMES ---
         if r == 0:
@@ -179,68 +202,71 @@ class HabitModel(QAbstractTableModel):
                 if d.day == 1 or c == 0: return d.strftime("%B").upper()
                 return ""
             if role == Qt.BackgroundRole: 
-                return QColor(MONTH_COLORS.get(self._dates[c].month, "#FFFFFF"))
-            if role == Qt.FontRole: 
-                return QFont("Segoe UI", 10, QFont.Bold)
-            if role == Qt.TextAlignmentRole: 
-                return Qt.AlignCenter
+                # Restored Month Colors with dimming for Dark Mode
+                color_hex = MONTH_COLORS.get(self._dates[c].month, "#FFFFFF")
+                if self.is_dark:
+                    return QColor(color_hex).darker(150)
+                return QColor(color_hex)
+            
+            if role == Qt.FontRole: return QFont("Segoe UI", 10, QFont.Bold)
+            if role == Qt.TextAlignmentRole: return Qt.AlignCenter
             if role == Qt.ForegroundRole: 
-                return QColor("#546E7A")
+                return QColor("#546E7A") if not self.is_dark else QColor("#DDDDDD")
+            if role == Qt.ToolTipRole:
+                return f"{self._dates[c].strftime('%B %Y')}"
 
         # --- ROW 1: DAY NUMBERS ---
         if r == 1:
-            if role == Qt.DisplayRole: 
-                return self._dates[c].strftime("%d")
+            if role == Qt.DisplayRole: return self._dates[c].strftime("%d")
             if role == Qt.BackgroundRole:
-                if c == self._today_idx: 
-                    return QColor("#FFD54F")
-                return QColor("#FAFAFA")
-            if role == Qt.FontRole: 
-                return QFont("Segoe UI", 9, QFont.Bold)
-            if role == Qt.TextAlignmentRole: 
-                return Qt.AlignCenter
+                if c == self._today_idx: return QColor("#FFD54F") 
+                return QColor(theme['bg'])
+            if role == Qt.FontRole: return QFont("Segoe UI", 9, QFont.Bold)
+            if role == Qt.TextAlignmentRole: return Qt.AlignCenter
             if role == Qt.ForegroundRole: 
-                return QColor("#424242")
+                return QColor("#000000") if c == self._today_idx else QColor(theme['text'])
+            
+            # Specific Tooltip for Date Row
+            if role == Qt.ToolTipRole:
+                return self._dates[c].strftime("%B %d, %Y")
 
         # --- ROW 2: DAY NAMES ---
         if r == 2:
-            if role == Qt.DisplayRole: 
-                return self._dates[c].strftime("%a")
+            if role == Qt.DisplayRole: return self._dates[c].strftime("%a")
             if role == Qt.BackgroundRole:
-                if c == self._today_idx: 
-                    return QColor("#FFF9C4")
-                return QColor("#FFFFFF")
-            if role == Qt.FontRole: 
-                return QFont("Segoe UI", 8, QFont.Medium)
-            if role == Qt.TextAlignmentRole: 
-                return Qt.AlignCenter
+                if c == self._today_idx: return QColor("#FFF9C4") 
+                return QColor(theme['card'])
+            if role == Qt.FontRole: return QFont("Segoe UI", 8, QFont.Medium)
+            if role == Qt.TextAlignmentRole: return Qt.AlignCenter
             if role == Qt.ForegroundRole:
                 day_idx = self._dates[c].weekday()
-                if day_idx >= 5: 
-                    return QColor("#E91E63")
-                return QColor("#78909C")
+                if day_idx >= 5: return QColor("#E91E63") 
+                return QColor(theme['text_sec'])
+            
+            # Specific Tooltip for Day Row
+            if role == Qt.ToolTipRole:
+                return self._dates[c].strftime("%A")
 
         # --- HABIT ROWS ---
         habit_idx = r - 3 
         if habit_idx >= len(self._habit_names): return None
 
         if role == Qt.BackgroundRole:
-            if self._data[habit_idx][c] == 1: 
-                return QColor("#4CAF50")
-            if c == self._today_idx: 
-                return QColor("#FFF9C4")
-            return QColor("#FFFFFF") if habit_idx % 2 == 0 else QColor("#FAFAFA")
+            if self._data[habit_idx][c] == 1: return QColor(theme['success'])
+            if c == self._today_idx: return QColor("#FFF9C4") if not self.is_dark else QColor("#4A4A3A")
+            return QColor(theme['card']) if habit_idx % 2 == 0 else QColor(theme['bg'])
         
+        # Habit Rows Tooltip
         if role == Qt.ToolTipRole:
             status = "✓ Completed" if self._data[habit_idx][c] == 1 else "○ Pending"
             return f"{status}\n{self._habit_names[habit_idx]} ({self._habit_times[habit_idx]})\n{self._dates[c].strftime('%B %d, %Y')}"
-        
         return None
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Vertical:
             if section == 0: 
-                if role == Qt.DisplayRole: return "" 
+                if role == Qt.DisplayRole: return "MONTHS"
+                if role == Qt.FontRole: return QFont("Segoe UI", 9, QFont.Bold)
             if section == 1: 
                 if role == Qt.DisplayRole: return "DAY" 
             if section == 2: 
@@ -253,7 +279,7 @@ class HabitModel(QAbstractTableModel):
                 if role == Qt.FontRole:
                     return QFont("Segoe UI", 9, QFont.Bold)
                 if role == Qt.ForegroundRole:
-                    return QColor("#2C3E50")
+                    return QColor(THEME_DARK['text'] if self.is_dark else THEME_LIGHT['text'])
         return None
 
     def toggle(self, index):
@@ -264,46 +290,55 @@ class HabitModel(QAbstractTableModel):
             self._data[habit_idx][c] = 1 - self._data[habit_idx][c]
             self.dataChanged.emit(index, index)
 
-# --- MODERN KPI CARD WITH ANIMATION ---
+# --- KPI CARD ---
 class KPICard(QFrame):
     def __init__(self, title, icon, accent_color="#3498DB"):
         super().__init__()
         self.accent_color = accent_color
-        self.setStyleSheet(f"""
-            QFrame {{ 
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #FFFFFF, stop:1 {accent_color}15);
-                border: 2px solid {accent_color}30;
-                border-radius: 16px;
-            }}
-            QLabel {{ border: none; background-color: transparent; }}
-        """)
-        apply_shadow(self, blur=15, offset=6, color="#15000000")
+        self.icon_char = icon
+        self.title_text = title
+        
+        self.icon_label = QLabel(icon)
+        self.lbl_title = QLabel(title.upper())
+        self.lbl_value = QLabel("0")
         
         layout = QVBoxLayout(self)
         layout.setSpacing(8)
         layout.setContentsMargins(24, 20, 24, 20)
         
-        # Icon and Title Row
         header_layout = QHBoxLayout()
-        icon_label = QLabel(icon)
-        icon_label.setStyleSheet(f"color: {accent_color}; font-size: 24px; font-weight: 900;")
-        
-        self.lbl_title = QLabel(title.upper())
-        self.lbl_title.setStyleSheet("color: #7F8C8D; font-size: 11px; font-weight: 700; letter-spacing: 1px;")
-        
-        header_layout.addWidget(icon_label)
+        header_layout.addWidget(self.icon_label)
         header_layout.addWidget(self.lbl_title)
         header_layout.addStretch()
-        
-        self.lbl_value = QLabel("0")
-        self.lbl_value.setStyleSheet(f"color: {accent_color}; font-size: 32px; font-weight: 900;")
         
         layout.addLayout(header_layout)
         layout.addWidget(self.lbl_value)
         layout.addStretch()
-        
         self.setFixedSize(220, 120)
+        
+        self.apply_theme(False) 
+
+    def apply_theme(self, is_dark):
+        theme = THEME_DARK if is_dark else THEME_LIGHT
+        bg_color = theme['card']
+        border_color = theme['border']
+        
+        bg_gradient_end = f"{self.accent_color}15" if not is_dark else f"{self.accent_color}25"
+        
+        self.setStyleSheet(f"""
+            QFrame {{ 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 {bg_color}, stop:1 {bg_gradient_end});
+                border: 2px solid {border_color};
+                border-radius: 16px;
+            }}
+            QLabel {{ border: none; background-color: transparent; }}
+        """)
+        apply_shadow(self, blur=15, offset=6, color="#000000" if is_dark else "#15000000")
+        
+        self.icon_label.setStyleSheet(f"color: {self.accent_color}; font-size: 24px; font-weight: 900;")
+        self.lbl_title.setStyleSheet(f"color: {theme['text_sec']}; font-size: 11px; font-weight: 700; letter-spacing: 1px;")
+        self.lbl_value.setStyleSheet(f"color: {self.accent_color}; font-size: 32px; font-weight: 900;")
 
     def set_value(self, val): 
         self.lbl_value.setText(str(val))
@@ -315,8 +350,11 @@ class HabitApp(QWidget):
         icon_path = resource_path(ICON_NAME)
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
+        
+        self.is_dark_mode = False 
         self.init_data()
         self.setup_ui()
+        self.apply_theme() 
 
     def init_data(self):
         self.start_date = datetime.date(YEAR, 1, 1)
@@ -343,8 +381,7 @@ class HabitApp(QWidget):
                         self.habit_names = loaded_content.get("names", DEFAULT_HABITS.copy())
                         self.habit_times = loaded_content.get("times", [])
                         self.habit_data = loaded_content.get("data", [])
-            except:
-                pass
+            except: pass
 
         if not self.habit_names:
             self.habit_names = DEFAULT_HABITS.copy()
@@ -371,122 +408,81 @@ class HabitApp(QWidget):
         self.setWindowTitle(f"Habit Dashboard — {YEAR}")
         self.resize(1450, 950)
         
-        # Global Stylesheet
-        self.setStyleSheet("""
-            QWidget {
-                font-family: 'Segoe UI', 'San Francisco', system-ui;
-            }
-            QScrollBar:vertical {
-                border: none;
-                background: #F5F5F5;
-                width: 12px;
-                border-radius: 6px;
-            }
-            QScrollBar::handle:vertical {
-                background: #BDBDBD;
-                border-radius: 6px;
-                min-height: 30px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background: #9E9E9E;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-        """)
-        
+        # Main Layout
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+
+        # Scroll Area
         self.main_scroll = QScrollArea(self)
         self.main_scroll.setWidgetResizable(True)
-        self.main_scroll.setStyleSheet("QScrollArea { border: none; background-color: #F5F7FA; }")
         
         self.container = QWidget()
-        self.container.setStyleSheet("background-color: #F5F7FA;")
         self.layout = QVBoxLayout(self.container)
         self.layout.setContentsMargins(40, 35, 40, 35)
         self.layout.setSpacing(30)
         
         self.main_scroll.setWidget(self.container)
+        root_layout.addWidget(self.main_scroll)
 
         # HEADER
         header_frame = QFrame()
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Title with gradient effect
         title_container = QWidget()
         title_layout = QVBoxLayout(title_container)
         title_layout.setContentsMargins(0, 0, 0, 0)
         title_layout.setSpacing(5)
         
-        title = QLabel(f"🎯 Habit Dashboard")
-        title.setStyleSheet("font-size: 38px; font-weight: 900; color: #1A252F;")
+        self.title_lbl = QLabel(f"🎯 Habit Dashboard")
+        self.title_lbl.setStyleSheet("font-size: 38px; font-weight: 900;")
         
-        subtitle = QLabel(f"Year {YEAR} — Build Better Habits Every Day")
-        subtitle.setStyleSheet("font-size: 14px; color: #7F8C8D; font-weight: 500;")
+        self.subtitle_lbl = QLabel(f"Year {YEAR} — Build Better Habits Every Day")
+        self.subtitle_lbl.setStyleSheet("font-size: 14px; font-weight: 500;")
         
-        title_layout.addWidget(title)
-        title_layout.addWidget(subtitle)
+        title_layout.addWidget(self.title_lbl)
+        title_layout.addWidget(self.subtitle_lbl)
         
-        date_lbl = QLabel(f"📅  {self.current_date.strftime('%B %d, %Y')}")
-        date_lbl.setStyleSheet("""
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #E3F2FD, stop:1 #BBDEFB);
-            color: #1565C0; 
-            font-size: 14px; 
-            font-weight: 700; 
-            padding: 12px 22px; 
-            border-radius: 25px; 
-            border: 2px solid #90CAF9;
-        """)
-        apply_shadow(date_lbl, blur=8, offset=3)
+        self.date_lbl = QLabel(f"📅  {self.current_date.strftime('%B %d, %Y')}")
+        self.date_lbl.setAlignment(Qt.AlignCenter)
+        apply_shadow(self.date_lbl, blur=8, offset=3)
 
         btn_add = AnimatedButton(" ➕ Add Habit ", "#27AE60", "#229954")
         btn_add.clicked.connect(self.add_habit)
 
-        btn_export = AnimatedButton(" 📊 Export Report  ▼ ", "#8E44AD", "#7D3C98")
-        btn_export.setStyleSheet(btn_export.styleSheet() + "QPushButton::menu-indicator { image: none; }")
+        self.btn_export = AnimatedButton(" 📊 Export Report  ▼ ", "#8E44AD", "#7D3C98")
+        self.btn_export.setStyleSheet(self.btn_export.styleSheet() + "QPushButton::menu-indicator { image: none; }")
         
-        menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu { 
-                background-color: white; 
-                border: 2px solid #E0E0E0; 
-                border-radius: 12px; 
-                padding: 8px; 
-            }
-            QMenu::item { 
-                padding: 10px 30px; 
-                color: #2C3E50;
-                font-size: 13px;
-                font-weight: 600;
-                border-radius: 6px;
-            } 
-            QMenu::item:selected { 
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #E3F2FD, stop:1 #BBDEFB);
-                color: #1565C0;
-            }
-        """)
+        self.menu = QMenu(self)
+        self.action_csv = QAction("📄 CSV (Raw Data)", self)
+        self.action_csv.setIcon(self.create_color_icon("#27AE60"))
+        self.action_csv.triggered.connect(self.export_csv)
         
-        action_csv = QAction("📄 CSV (Raw Data)", self)
-        action_csv.setIcon(self.create_color_icon("#27AE60"))
-        action_csv.triggered.connect(self.export_csv)
+        self.action_pdf = QAction("📕 PDF (Visual Report)", self)
+        self.action_pdf.setIcon(self.create_color_icon("#E74C3C"))
+        self.action_pdf.triggered.connect(self.export_pdf)
         
-        action_pdf = QAction("📕 PDF (Visual Report)", self)
-        action_pdf.setIcon(self.create_color_icon("#E74C3C"))
-        action_pdf.triggered.connect(self.export_pdf)
-        
-        menu.addAction(action_csv)
-        menu.addAction(action_pdf)
-        btn_export.setMenu(menu)
+        self.menu.addAction(self.action_csv)
+        self.menu.addAction(self.action_pdf)
+        self.btn_export.setMenu(self.menu)
+
+        # Theme Toggle Button
+        self.btn_theme = QPushButton(" 🌙 ")
+        self.btn_theme.setFixedSize(45, 45)
+        self.btn_theme.setCursor(Qt.PointingHandCursor)
+        self.btn_theme.clicked.connect(self.toggle_theme)
+        apply_shadow(self.btn_theme, blur=8, offset=3)
 
         header_layout.addWidget(title_container)
         header_layout.addStretch()
-        header_layout.addWidget(date_lbl)
+        header_layout.addWidget(self.date_lbl)
         header_layout.addSpacing(15)
         header_layout.addWidget(btn_add)
         header_layout.addSpacing(10)
-        header_layout.addWidget(btn_export)
+        header_layout.addWidget(self.btn_export)
+        header_layout.addSpacing(10)
+        header_layout.addWidget(self.btn_theme) # Moved next to Export
         self.layout.addWidget(header_frame)
 
         # KPI CARDS
@@ -504,17 +500,10 @@ class HabitApp(QWidget):
         self.layout.addLayout(kpi_layout)
 
         # GRID CONTAINER
-        grid_container = QFrame()
-        grid_container.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border-radius: 16px;
-                border: 2px solid #E8EAF6;
-            }
-        """)
-        apply_shadow(grid_container, blur=20, offset=6, color="#10000000")
+        self.grid_container = QFrame()
+        apply_shadow(self.grid_container, blur=20, offset=6)
         
-        grid_layout_inner = QVBoxLayout(grid_container)
+        grid_layout_inner = QVBoxLayout(self.grid_container)
         grid_layout_inner.setContentsMargins(0, 0, 0, 0)
 
         self.table = QTableView()
@@ -528,79 +517,111 @@ class HabitApp(QWidget):
         
         self.table.verticalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.verticalHeader().customContextMenuRequested.connect(self.handle_header_menu)
-
-        self.table.setStyleSheet("""
-            QTableView { 
-                border: none; 
-                background-color: white; 
-                gridline-color: #F0F0F0; 
-                border-radius: 16px;
-                selection-background-color: transparent;
-            }
-            QHeaderView::section { 
-                background-color: #FAFAFA; 
-                color: #2C3E50; 
-                padding-left: 15px; 
-                border: none; 
-                border-right: 1px solid #E8EAF6; 
-                border-bottom: 2px solid #E8EAF6; 
-                font-weight: 700; 
-                font-size: 13px; 
-                text-align: left;
-            }
-            QTableView::item:hover {
-                background-color: #E3F2FD;
-            }
-        """)
         
         self.table.horizontalHeader().setVisible(False)
         self.table.setColumnWidth(0, 50)
-        for i in range(DAYS): 
-            self.table.setColumnWidth(i, 42)
+        for i in range(DAYS): self.table.setColumnWidth(i, 42)
         
         self.table.setSelectionMode(QAbstractItemView.NoSelection)
         self.table.setFocusPolicy(Qt.NoFocus)
         self.table.clicked.connect(self.on_cell_clicked)
         
         self.update_table_height()
-
         grid_layout_inner.addWidget(self.table)
-        self.layout.addWidget(grid_container)
+        self.layout.addWidget(self.grid_container)
 
         # CHART CONTAINER
-        chart_container = QFrame()
-        chart_container.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border-radius: 16px;
-                border: 2px solid #E8EAF6;
-            }
-        """)
-        apply_shadow(chart_container, blur=20, offset=6, color="#10000000")
+        self.chart_container = QFrame()
+        apply_shadow(self.chart_container, blur=20, offset=6)
         
-        chart_layout = QVBoxLayout(chart_container)
+        chart_layout = QVBoxLayout(self.chart_container)
         chart_layout.setContentsMargins(25, 25, 25, 25)
 
-        chart_title = QLabel("📈 Annual Consistency Trend")
-        chart_title.setStyleSheet("font-size: 18px; font-weight: 800; color: #1A252F; padding-bottom: 10px;")
-        chart_layout.addWidget(chart_title)
+        self.chart_title = QLabel("📈 Annual Consistency Trend")
+        self.chart_title.setStyleSheet("font-size: 18px; font-weight: 800; padding-bottom: 10px;")
+        chart_layout.addWidget(self.chart_title)
 
         self.fig = Figure(figsize=(9, 3.8), dpi=100)
-        self.fig.patch.set_facecolor('white')
         self.canvas = FigureCanvasQTAgg(self.fig)
         self.canvas.setFixedHeight(380)
         
         chart_layout.addWidget(self.canvas)
-        self.layout.addWidget(chart_container)
-
-        root_layout = QVBoxLayout(self)
-        root_layout.setContentsMargins(0, 0, 0, 0)
-        root_layout.addWidget(self.main_scroll)
+        self.layout.addWidget(self.chart_container)
 
         self.apply_month_spans()
         self.update_analytics()
         if self.today_idx > 0: 
             self.table.scrollTo(self.model.index(0, self.today_idx), QAbstractItemView.PositionAtCenter)
+
+    def toggle_theme(self):
+        self.is_dark_mode = not self.is_dark_mode
+        self.apply_theme()
+        
+    def apply_theme(self):
+        theme = THEME_DARK if self.is_dark_mode else THEME_LIGHT
+        
+        # --- FIXED: Explicit Tooltip Styling for Visibility ---
+        base_style = f"""
+            QWidget {{ font-family: 'Segoe UI', system-ui; }}
+            QScrollBar:vertical {{ border: none; background: {theme['bg']}; width: 12px; border-radius: 6px; }}
+            QScrollBar::handle:vertical {{ background: {theme['scroll']}; border-radius: 6px; min-height: 30px; }}
+            QScrollBar::handle:vertical:hover {{ background: {theme['accent']}; }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0px; }}
+            
+            /* DYNAMIC TOOLTIP STYLING */
+            QToolTip {{ 
+                background-color: {theme['tooltip_bg']}; 
+                color: {theme['tooltip_text']}; 
+                border: 1px solid {theme['tooltip_border']};
+                font-family: 'Segoe UI';
+                font-size: 12px;
+                padding: 4px;
+            }}
+        """
+        self.setStyleSheet(base_style)
+        
+        self.container.setStyleSheet(f"background-color: {theme['bg']};")
+        self.main_scroll.setStyleSheet(f"QScrollArea {{ border: none; background-color: {theme['bg']}; }}")
+        
+        # Text Colors
+        self.title_lbl.setStyleSheet(f"font-size: 38px; font-weight: 900; color: {theme['text']};")
+        self.subtitle_lbl.setStyleSheet(f"font-size: 14px; font-weight: 500; color: {theme['text_sec']};")
+        self.chart_title.setStyleSheet(f"font-size: 18px; font-weight: 800; color: {theme['text']}; padding-bottom: 10px;")
+
+        # Date Label
+        if self.is_dark_mode:
+            self.date_lbl.setStyleSheet(f"background-color: {theme['card']}; color: {theme['accent']}; font-size: 14px; font-weight: 700; padding: 12px 22px; border-radius: 25px; border: 2px solid {theme['border']};")
+        else:
+            self.date_lbl.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #E3F2FD, stop:1 #BBDEFB); color: #1565C0; font-size: 14px; font-weight: 700; padding: 12px 22px; border-radius: 25px; border: 2px solid #90CAF9;")
+
+        # Theme Button
+        self.btn_theme.setText(" ☀️ " if self.is_dark_mode else " 🌙 ")
+        self.btn_theme.setStyleSheet(f"QPushButton {{ background-color: {theme['card']}; color: {theme['text']}; border-radius: 10px; border: 1px solid {theme['border']}; font-size: 20px; }} QPushButton:hover {{ background-color: {theme['hover']}; }}")
+
+        # Menu Styling
+        self.menu.setStyleSheet(f"""
+            QMenu {{ background-color: {theme['card']}; border: 1px solid {theme['border']}; border-radius: 12px; padding: 8px; }}
+            QMenu::item {{ padding: 10px 30px; color: {theme['text']}; font-weight: 600; border-radius: 6px; }} 
+            QMenu::item:selected {{ background-color: {theme['hover']}; color: {theme['accent']}; }}
+        """)
+
+        # Containers
+        for container in [self.grid_container, self.chart_container]:
+            container.setStyleSheet(f"background-color: {theme['card']}; border-radius: 16px; border: 1px solid {theme['border']};")
+            apply_shadow(container, blur=20, offset=6, color="#000000" if self.is_dark_mode else "#10000000")
+
+        # Table Styling
+        self.table.setStyleSheet(f"""
+            QTableView {{ border: none; background-color: {theme['card']}; gridline-color: {theme['table_grid']}; border-radius: 16px; }}
+            QHeaderView::section {{ background-color: {theme['table_header']}; color: {theme['text']}; padding-left: 15px; border: none; border-right: 1px solid {theme['border']}; border-bottom: 2px solid {theme['border']}; font-weight: 700; font-size: 13px; text-align: left; }}
+        """)
+
+        # Update Model and Components
+        self.model.set_theme_mode(self.is_dark_mode)
+        for card in [self.card_today, self.card_streak, self.card_weekly, self.card_monthly]:
+            card.apply_theme(self.is_dark_mode)
+        
+        self.update_analytics() 
 
     def handle_header_menu(self, pos):
         row = self.table.verticalHeader().logicalIndexAt(pos)
@@ -608,27 +629,9 @@ class HabitApp(QWidget):
 
         habit_idx = row - 3
         habit_name = self.habit_names[habit_idx]
-
+        
         menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu { 
-                background-color: white; 
-                border: 2px solid #E0E0E0; 
-                border-radius: 12px;
-                padding: 8px;
-            } 
-            QMenu::item { 
-                padding: 10px 30px; 
-                color: #2C3E50;
-                font-weight: 600;
-                border-radius: 6px;
-            } 
-            QMenu::item:selected { 
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #E3F2FD, stop:1 #BBDEFB);
-                color: #1565C0;
-            }
-        """)
+        menu.setStyleSheet(self.menu.styleSheet())
         
         rename_action = QAction(f"✏️ Edit '{habit_name}'", self)
         rename_action.triggered.connect(lambda: self.edit_habit(habit_idx))
@@ -644,7 +647,7 @@ class HabitApp(QWidget):
         old_name = self.habit_names[index]
         old_time = self.habit_times[index]
         
-        dialog = HabitDialog(self, old_name, old_time)
+        dialog = HabitDialog(self, old_name, old_time, self.is_dark_mode)
         if dialog.exec_() == QDialog.Accepted:
             new_name, new_time = dialog.get_data()
             if new_name:
@@ -662,6 +665,9 @@ class HabitApp(QWidget):
         msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         msg_box.setDefaultButton(QMessageBox.No)
         
+        theme = THEME_DARK if self.is_dark_mode else THEME_LIGHT
+        msg_box.setStyleSheet(f"QMessageBox {{ background-color: {theme['card']}; color: {theme['text']}; }} QLabel {{ color: {theme['text']}; }} QPushButton {{ color: {theme['text']}; }}")
+        
         reply = msg_box.exec_()
         if reply == QMessageBox.Yes:
             del self.habit_names[index]
@@ -673,7 +679,7 @@ class HabitApp(QWidget):
             self.update_analytics()
 
     def add_habit(self):
-        dialog = HabitDialog(self)
+        dialog = HabitDialog(self, is_dark=self.is_dark_mode)
         if dialog.exec_() == QDialog.Accepted:
             new_name, new_time = dialog.get_data()
             if new_name:
@@ -750,32 +756,36 @@ class HabitApp(QWidget):
         self.card_monthly.set_value(f"{self.monthly_avg}%")
 
         daily_avg = [sum(self.habit_data[r][c] for r in range(num_habits)) / num_habits * 100 for c in range(DAYS)]
+        
+        # --- MATPLOTLIB THEME UPDATE ---
+        theme = THEME_DARK if self.is_dark_mode else THEME_LIGHT
         self.fig.clear()
         ax = self.fig.add_subplot(111)
-        ax.set_facecolor('#FAFAFA')
+        self.fig.patch.set_facecolor(theme['chart_bg'])
+        ax.set_facecolor(theme['chart_bg'])
         
         # Create gradient fill
-        ax.fill_between(range(DAYS), daily_avg, color='#6B9BD1', alpha=0.15)
-        ax.plot(range(DAYS), daily_avg, color='#5A8AC0', linewidth=3, zorder=10)
+        ax.fill_between(range(DAYS), daily_avg, color=theme['chart_fill'], alpha=0.15)
+        ax.plot(range(DAYS), daily_avg, color=theme['chart_line'], linewidth=3, zorder=10)
         
-        # Add smooth curve appearance
         ax.set_ylim(0, 110)
         ax.set_xlim(0, DAYS)
         
-        # Style improvements
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_color('#E0E0E0')
-        ax.spines['bottom'].set_color('#E0E0E0')
+        ax.spines['left'].set_color(theme['border'])
+        ax.spines['bottom'].set_color(theme['border'])
         ax.spines['left'].set_linewidth(2)
         ax.spines['bottom'].set_linewidth(2)
         
-        ax.tick_params(axis='x', colors='#7F8C8D', labelsize=10, length=6, width=2)
-        ax.tick_params(axis='y', colors='#7F8C8D', labelsize=10, length=6, width=2)
+        tick_color = theme['text_sec']
+        ax.tick_params(axis='x', colors=tick_color, labelsize=10, length=6, width=2)
+        ax.tick_params(axis='y', colors=tick_color, labelsize=10, length=6, width=2)
         
-        ax.grid(True, axis='y', linestyle='--', alpha=0.3, color='#BDBDBD', linewidth=1)
-        ax.set_ylabel('Completion Rate (%)', fontsize=11, fontweight='600', color='#546E7A')
-        ax.set_xlabel('Day of Year', fontsize=11, fontweight='600', color='#546E7A')
+        grid_color = theme['border']
+        ax.grid(True, axis='y', linestyle='--', alpha=0.3, color=grid_color, linewidth=1)
+        ax.set_ylabel('Completion Rate (%)', fontsize=11, fontweight='600', color=theme['text_sec'])
+        ax.set_xlabel('Day of Year', fontsize=11, fontweight='600', color=theme['text_sec'])
         
         self.fig.subplots_adjust(top=0.95, bottom=0.15, left=0.08, right=0.97)
         self.canvas.draw()
@@ -805,30 +815,29 @@ class HabitApp(QWidget):
                     row.append(f"{int(d_sum/num_habits*100)}%")
                     writer.writerow(row)
             
-            msg = QMessageBox(self)
-            msg.setIcon(QMessageBox.Information)
-            msg.setWindowTitle("Success")
-            msg.setText("CSV Export Complete!")
-            msg.setInformativeText(f"Saved to: {path}")
-            msg.exec_()
+            QMessageBox.information(self, "Success", f"CSV Export Complete!\nSaved to: {path}")
         except Exception as e:
-            msg = QMessageBox(self)
-            msg.setIcon(QMessageBox.Critical)
-            msg.setWindowTitle("Error")
-            msg.setText("Export Failed")
-            msg.setInformativeText(str(e))
-            msg.exec_()
+            QMessageBox.critical(self, "Error", f"Export Failed: {str(e)}")
 
     def export_pdf(self):
         path, _ = QFileDialog.getSaveFileName(self, "Save PDF", f"Habit_Report_{YEAR}.pdf", "PDF (*.pdf)")
         if not path: return
         try:
+            self.fig.patch.set_facecolor('white')
+            ax = self.fig.gca()
+            ax.set_facecolor('white')
+            for spine in ax.spines.values(): spine.set_color('#E0E0E0')
+            ax.tick_params(colors='#7F8C8D')
+            ax.xaxis.label.set_color('#546E7A')
+            ax.yaxis.label.set_color('#546E7A')
+            
             self.fig.savefig("temp_chart.png", facecolor='white', dpi=150, bbox_inches='tight')
+            
+            self.update_analytics()
             
             c = canvas.Canvas(path, pagesize=letter)
             w, h = letter
             
-            # Header
             c.setFont("Helvetica-Bold", 26)
             c.setFillColor(colors.HexColor("#1A252F"))
             c.drawString(50, h - 60, f"Habit Dashboard {YEAR}")
@@ -837,7 +846,6 @@ class HabitApp(QWidget):
             c.setFillColor(colors.HexColor("#7F8C8D"))
             c.drawString(50, h - 80, f"Generated: {datetime.date.today().strftime('%B %d, %Y')}")
             
-            # KPI Cards
             y = h - 150
             c.setStrokeColor(colors.HexColor("#E0E0E0"))
             c.setLineWidth(2)
@@ -851,60 +859,34 @@ class HabitApp(QWidget):
             
             for i, (lbl, val, color) in enumerate(kpis):
                 x = 50 + (i * 130)
-                
-                # Card background
                 c.setFillColor(colors.HexColor(color + "15"))
                 c.roundRect(x, y, 120, 60, 8, fill=1, stroke=0)
-                
-                # Border
                 c.setStrokeColor(colors.HexColor(color))
                 c.setLineWidth(2)
                 c.roundRect(x, y, 120, 60, 8, fill=0, stroke=1)
-                
-                # Text
                 c.setFillColor(colors.HexColor("#7F8C8D"))
                 c.setFont("Helvetica-Bold", 10)
                 c.drawCentredString(x+60, y+42, lbl)
-                
                 c.setFont("Helvetica-Bold", 18)
                 c.setFillColor(colors.HexColor(color))
                 c.drawCentredString(x+60, y+18, val)
             
-            # Chart
-            c.drawImage("temp_chart.png", 50, h - 450, width=500, height=200, preserveAspectRatio=True)
-            
+            c.drawImage("temp_chart.png", 50, h - 450, width=500, height=180, preserveAspectRatio=True)
             c.showPage()
             c.save()
             
-            if os.path.exists("temp_chart.png"): 
-                os.remove("temp_chart.png")
-            
-            msg = QMessageBox(self)
-            msg.setIcon(QMessageBox.Information)
-            msg.setWindowTitle("Success")
-            msg.setText("PDF Export Complete!")
-            msg.setInformativeText(f"Saved to: {path}")
-            msg.exec_()
+            if os.path.exists("temp_chart.png"): os.remove("temp_chart.png")
+            QMessageBox.information(self, "Success", f"PDF Export Complete!\nSaved to: {path}")
         except Exception as e:
-            msg = QMessageBox(self)
-            msg.setIcon(QMessageBox.Critical)
-            msg.setWindowTitle("Error")
-            msg.setText("Export Failed")
-            msg.setInformativeText(str(e))
-            msg.exec_()
+            QMessageBox.critical(self, "Error", f"Export Failed: {str(e)}")
 
 if __name__ == "__main__":
-    myappid = 'mycompany.habit.tracker.6.0' 
-    try: 
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    except: 
-        pass
+    myappid = 'mycompany.habit.tracker.7.0' 
+    try: ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    except: pass
     
     app = QApplication(sys.argv)
-    
-    # Set application-wide font
     app.setFont(QFont("Segoe UI", 10))
-    
     if os.path.exists(resource_path(ICON_NAME)):
         app.setWindowIcon(QIcon(resource_path(ICON_NAME)))
     
