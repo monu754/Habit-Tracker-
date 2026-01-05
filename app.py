@@ -37,7 +37,7 @@ THEME_LIGHT = {
     "table_header": "#FAFAFA", "table_grid": "#F0F0F0", "scroll": "#BDBDBD",
     "chart_bg": "#FFFFFF", "chart_fill": "#6B9BD1", "chart_line": "#5A8AC0",
     "accent": "#3498DB", "success": "#4CAF50",
-    "tooltip_bg": "#FFFFFF", "tooltip_text": "#000000", "tooltip_border": "#CCCCCC" # Added Explicit Tooltip Colors
+    "tooltip_bg": "#FFFFFF", "tooltip_text": "#000000", "tooltip_border": "#CCCCCC"
 }
 
 THEME_DARK = {
@@ -46,7 +46,7 @@ THEME_DARK = {
     "table_header": "#252525", "table_grid": "#2C2C2C", "scroll": "#555555",
     "chart_bg": "#1E1E1E", "chart_fill": "#3498DB", "chart_line": "#5DADE2",
     "accent": "#5DADE2", "success": "#66BB6A",
-    "tooltip_bg": "#2C3E50", "tooltip_text": "#FFFFFF", "tooltip_border": "#1A252F" # Added Explicit Tooltip Colors
+    "tooltip_bg": "#2C3E50", "tooltip_text": "#FFFFFF", "tooltip_border": "#1A252F"
 }
 
 def resource_path(relative_path):
@@ -202,7 +202,6 @@ class HabitModel(QAbstractTableModel):
                 if d.day == 1 or c == 0: return d.strftime("%B").upper()
                 return ""
             if role == Qt.BackgroundRole: 
-                # Restored Month Colors with dimming for Dark Mode
                 color_hex = MONTH_COLORS.get(self._dates[c].month, "#FFFFFF")
                 if self.is_dark:
                     return QColor(color_hex).darker(150)
@@ -225,8 +224,6 @@ class HabitModel(QAbstractTableModel):
             if role == Qt.TextAlignmentRole: return Qt.AlignCenter
             if role == Qt.ForegroundRole: 
                 return QColor("#000000") if c == self._today_idx else QColor(theme['text'])
-            
-            # Specific Tooltip for Date Row
             if role == Qt.ToolTipRole:
                 return self._dates[c].strftime("%B %d, %Y")
 
@@ -242,8 +239,6 @@ class HabitModel(QAbstractTableModel):
                 day_idx = self._dates[c].weekday()
                 if day_idx >= 5: return QColor("#E91E63") 
                 return QColor(theme['text_sec'])
-            
-            # Specific Tooltip for Day Row
             if role == Qt.ToolTipRole:
                 return self._dates[c].strftime("%A")
 
@@ -256,7 +251,6 @@ class HabitModel(QAbstractTableModel):
             if c == self._today_idx: return QColor("#FFF9C4") if not self.is_dark else QColor("#4A4A3A")
             return QColor(theme['card']) if habit_idx % 2 == 0 else QColor(theme['bg'])
         
-        # Habit Rows Tooltip
         if role == Qt.ToolTipRole:
             status = "✓ Completed" if self._data[habit_idx][c] == 1 else "○ Pending"
             return f"{status}\n{self._habit_names[habit_idx]} ({self._habit_times[habit_idx]})\n{self._dates[c].strftime('%B %d, %Y')}"
@@ -381,6 +375,8 @@ class HabitApp(QWidget):
                         self.habit_names = loaded_content.get("names", DEFAULT_HABITS.copy())
                         self.habit_times = loaded_content.get("times", [])
                         self.habit_data = loaded_content.get("data", [])
+                        # --- UPDATED: Load Theme Preference ---
+                        self.is_dark_mode = loaded_content.get("theme", False)
             except: pass
 
         if not self.habit_names:
@@ -408,12 +404,10 @@ class HabitApp(QWidget):
         self.setWindowTitle(f"Habit Dashboard — {YEAR}")
         self.resize(1450, 950)
         
-        # Main Layout
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
 
-        # Scroll Area
         self.main_scroll = QScrollArea(self)
         self.main_scroll.setWidgetResizable(True)
         
@@ -467,7 +461,6 @@ class HabitApp(QWidget):
         self.menu.addAction(self.action_pdf)
         self.btn_export.setMenu(self.menu)
 
-        # Theme Toggle Button
         self.btn_theme = QPushButton(" 🌙 ")
         self.btn_theme.setFixedSize(45, 45)
         self.btn_theme.setCursor(Qt.PointingHandCursor)
@@ -482,7 +475,7 @@ class HabitApp(QWidget):
         header_layout.addSpacing(10)
         header_layout.addWidget(self.btn_export)
         header_layout.addSpacing(10)
-        header_layout.addWidget(self.btn_theme) # Moved next to Export
+        header_layout.addWidget(self.btn_theme)
         self.layout.addWidget(header_frame)
 
         # KPI CARDS
@@ -556,19 +549,18 @@ class HabitApp(QWidget):
     def toggle_theme(self):
         self.is_dark_mode = not self.is_dark_mode
         self.apply_theme()
+        # Save preference immediately upon toggle
+        self.save_data()
         
     def apply_theme(self):
         theme = THEME_DARK if self.is_dark_mode else THEME_LIGHT
         
-        # --- FIXED: Explicit Tooltip Styling for Visibility ---
         base_style = f"""
             QWidget {{ font-family: 'Segoe UI', system-ui; }}
             QScrollBar:vertical {{ border: none; background: {theme['bg']}; width: 12px; border-radius: 6px; }}
             QScrollBar::handle:vertical {{ background: {theme['scroll']}; border-radius: 6px; min-height: 30px; }}
             QScrollBar::handle:vertical:hover {{ background: {theme['accent']}; }}
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0px; }}
-            
-            /* DYNAMIC TOOLTIP STYLING */
             QToolTip {{ 
                 background-color: {theme['tooltip_bg']}; 
                 color: {theme['tooltip_text']}; 
@@ -709,11 +701,13 @@ class HabitApp(QWidget):
         self.save_data()
         self.update_analytics()
     
+    # --- UPDATED: SAVE LOGIC TO INCLUDE THEME ---
     def save_data(self):
         save_package = {
             "names": self.habit_names,
             "times": self.habit_times,
-            "data": self.habit_data
+            "data": self.habit_data,
+            "theme": self.is_dark_mode  # Save the theme preference
         }
         with open(DATA_FILE, "w") as f: 
             json.dump(save_package, f)
@@ -757,14 +751,12 @@ class HabitApp(QWidget):
 
         daily_avg = [sum(self.habit_data[r][c] for r in range(num_habits)) / num_habits * 100 for c in range(DAYS)]
         
-        # --- MATPLOTLIB THEME UPDATE ---
         theme = THEME_DARK if self.is_dark_mode else THEME_LIGHT
         self.fig.clear()
         ax = self.fig.add_subplot(111)
         self.fig.patch.set_facecolor(theme['chart_bg'])
         ax.set_facecolor(theme['chart_bg'])
         
-        # Create gradient fill
         ax.fill_between(range(DAYS), daily_avg, color=theme['chart_fill'], alpha=0.15)
         ax.plot(range(DAYS), daily_avg, color=theme['chart_line'], linewidth=3, zorder=10)
         
