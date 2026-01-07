@@ -173,17 +173,23 @@ class KPICard(QFrame):
         self.lbl_title = QLabel(title.upper())
         self.lbl_value = QLabel("0")
         
-        # --- REVERTED: Left Aligned Layout ---
         layout = QVBoxLayout(self)
         layout.setSpacing(5)
         layout.setContentsMargins(20, 20, 20, 20)
         
+        # --- FIXED: Centered Group Layout ---
+        # 1. Header Layout (Icon + Title on same line)
         header_layout = QHBoxLayout()
+        header_layout.addStretch() # Push from left
         header_layout.addWidget(self.icon_label)
         header_layout.addWidget(self.lbl_title)
-        header_layout.addStretch() # Pushes content to the left
+        header_layout.addStretch() # Push from right
+        # This keeps them together in the center
         
         layout.addLayout(header_layout)
+        
+        # 2. Value Layout (Centered text)
+        self.lbl_value.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.lbl_value)
         
         self.setMinimumWidth(240)
@@ -208,12 +214,9 @@ class KPICard(QFrame):
 
         apply_shadow(self, blur=10, offset=4, color=theme['shadow'])
         
-        # --- INCREASED FONT SIZES ---
-        # Check if this is the Today card to make its emoji bigger
+        # --- PRESERVED LARGE FONT SIZES ---
         emoji_size = "32px" if self.key == "Today" else "22px"
         self.icon_label.setStyleSheet(f"color: {text_color}; font-size: {emoji_size};")
-        
-        # Increased to 14px
         self.lbl_title.setStyleSheet(f"color: {text_color}; font-size: 17px; font-weight: 800; opacity: 0.9;") 
         self.lbl_value.setStyleSheet(f"color: {text_color}; font-size: 28px; font-weight: 800;")
 
@@ -437,7 +440,6 @@ class HabitApp(QWidget):
         """)
         self.container.setStyleSheet(f"background-color: {theme['bg']};"); self.main_scroll.setStyleSheet(f"background-color: {theme['bg']}; border: none;")
         
-        # --- INCREASED DASHBOARD TITLE SIZE (34px) ---
         self.title_lbl.setStyleSheet(f"color: {theme['text_primary']}; font-size: 34px; font-weight: 800;")
         
         self.subtitle_lbl.setStyleSheet(f"color: {theme['text_secondary']}; font-size: 18px;")
