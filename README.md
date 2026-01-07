@@ -11,19 +11,64 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
   <img src="screenshot.png" width="800" alt="Habit Tracker Dashboard">
 </p>
 
-## ✨ Features
+## 🚀 Key Features
+# 📅 Advanced Calendar System
+* 365-Day View: A horizontally scrollable grid representing every single day of the year.
 
-* **Interactive Habit Grid:** A 365-day scrollable interface with dynamic month-based color coding and centered month headers.
-* **Automatic Highlighting:** The current date column is automatically highlighted in **Gold** and **Yellow** to keep you focused.
-* **KPI Dashboard:** Real-time calculation of:
-    * **Today %:** Completion progress for the current day.
-    * **Best Streak:** Your longest run of "Perfect Days" (all habits completed).
-    * **Weekly/Monthly Averages:** Rolling completion rates to track long-term trends.
-* **Data Visualization:** Integrated Matplotlib chart showing yearly consistency patterns with labeled axes.
-* **Theme:** Light/Dark Theme toggle button.
-* **Add/Edit:** You can add habits or edit them by right-clicking on the habit.
-* **Export:** Export the data using pdf or CSV 
-* **Persistent Storage:** Automatically saves progress to a local `habit_data.json` file.
+* Intuitive Tracking: Toggle habit completion status (Yes/No) with a simple click on the grid.
+
+* Smart Visualization: Months are visually separated using alternating background colors for easier navigation.
+
+* Today & Weekend Highlighting: The current date is highlighted in yellow, and weekends are marked in red to help you stay oriented.
+
+* Auto-Scroll: On startup, the dashboard automatically scrolls to the current date.
+
+# 📊 Real-Time Analytics
+* KPI Cards: Four high-visibility cards providing instant feedback on your progress:
+
+* Today: Percentage of habits completed for the current day.
+
+* Best Streak: Your longest consecutive run of completing all habits.
+
+* Weekly Avg: Completion percentage over the last 7 days.
+
+* Monthly Avg: Completion percentage over the last 30 days.
+
+* Annual Consistency Trend: A dynamic area-line chart visualizing your progress across the entire year.
+
+* Monthly Breakdown: A bar chart comparing your average success rate month-by-month, featuring percentage labels above each bar.
+
+# 🛠 Habit Management
+* Full CRUD Support: Easily add new habits with specific times, edit existing ones, or delete habits you no longer wish to track.
+
+* Hover-Sensitive Editing: A pencil icon (✏️) appears only when hovering over a habit name for a cleaner UI and quick modifications.
+
+* Persistent Storage: Data is automatically saved to a local JSON file whenever changes are made.
+
+# 🎨 Customization & Export
+* Dual-Theme Engine: Seamlessly switch between Light Mode and Dark Mode. Every element, including graphs, adapts instantly.
+
+* PDF Reporting: Export a professional summary including your current stats and snapshots of both your annual and monthly graphs.
+
+* CSV Export: Generate a detailed spreadsheet containing your daily logs and a summarized performance section.
+
+* Backup & Restore: Export your entire history to a standalone file to prevent data loss or move between devices.
+
+# ⚡ Performance & Stability
+* Anti-Wobble Design: Precisely calculated geometry ensures vertical stability, preventing the interface from "jittering" during horizontal scrolling.
+
+* Shadow Effects: Modern UI with graphical drop shadows on cards and containers for a sleek, layered look.
+
+## 🛠 Tech Stack
+* **Language:** Python 3.x
+
+* **GUI Framework:** PySide6 (Qt for Python)
+
+* **Visualization:** Matplotlib
+
+* **Reporting:** ReportLab (for PDF generation)
+
+* **Data Handling:** JSON, CSV
 
 ## 🚀 Installation & Usage
 
@@ -46,10 +91,7 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
     python app.py
     ```
 
-## 🛠️ Built With
-* **PySide6:** For a modern, high-performance Graphical User Interface.
-* **Matplotlib:** For rendering the yearly consistency trend graph.
-* **JSON:** For lightweight, local data persistence.
+
 
 ## ⚖️ License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
