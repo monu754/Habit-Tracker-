@@ -12,7 +12,7 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
 </p>
 
 ## 🚀 Key Features
-# 📅 Advanced Calendar System
+### 📅 Advanced Calendar System
 * 365-Day View: A horizontally scrollable grid representing every single day of the year.
 
 * Intuitive Tracking: Toggle habit completion status (Yes/No) with a simple click on the grid.
@@ -23,7 +23,7 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
 
 * Auto-Scroll: On startup, the dashboard automatically scrolls to the current date.
 
-# 📊 Real-Time Analytics
+### 📊 Real-Time Analytics
 * KPI Cards: Four high-visibility cards providing instant feedback on your progress:
 
 * Today: Percentage of habits completed for the current day.
@@ -38,14 +38,14 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
 
 * Monthly Breakdown: A bar chart comparing your average success rate month-by-month, featuring percentage labels above each bar.
 
-# 🛠 Habit Management
+### 🛠 Habit Management
 * Full CRUD Support: Easily add new habits with specific times, edit existing ones, or delete habits you no longer wish to track.
 
 * Hover-Sensitive Editing: A pencil icon (✏️) appears only when hovering over a habit name for a cleaner UI and quick modifications.
 
 * Persistent Storage: Data is automatically saved to a local JSON file whenever changes are made.
 
-# 🎨 Customization & Export
+### 🎨 Customization & Export
 * Dual-Theme Engine: Seamlessly switch between Light Mode and Dark Mode. Every element, including graphs, adapts instantly.
 
 * PDF Reporting: Export a professional summary including your current stats and snapshots of both your annual and monthly graphs.
@@ -54,7 +54,7 @@ A sleek, desktop-based habit tracking application built with **Python**, **PySid
 
 * Backup & Restore: Export your entire history to a standalone file to prevent data loss or move between devices.
 
-# ⚡ Performance & Stability
+### ⚡ Performance & Stability
 * Anti-Wobble Design: Precisely calculated geometry ensures vertical stability, preventing the interface from "jittering" during horizontal scrolling.
 
 * Shadow Effects: Modern UI with graphical drop shadows on cards and containers for a sleek, layered look.
