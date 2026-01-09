@@ -1,100 +1,220 @@
-# 🎯 Data-Driven Habit Tracker (2026)
+# 🎯 Data-Driven Habit Tracker (2026 Edition)
 
-![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![PySide6](https://img.shields.io/badge/UI-PySide6-green.svg)
-![Matplotlib](https://img.shields.io/badge/Data-Matplotlib-orange.svg)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Matplotlib](https://img.shields.io/badge/Charts-Matplotlib-orange.svg)
+![ReportLab](https://img.shields.io/badge/PDF-ReportLab-purple.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Status](https://img.shields.io/badge/Status-Active-success.svg)
 
-A sleek, desktop-based habit tracking application built with **Python**, **PySide6 (Qt)**, and **Matplotlib**. This tool allows users to track daily consistency across multiple habits and provides real-time analytical insights through a KPI dashboard and trend visualizations.
+A modern, highly-interactive, and data-driven **desktop habit tracking application** built using **Python**, **PySide6 (Qt)**, and **Matplotlib**.  
+The 2026 version introduces a powerful **analytics engine**, **drag-and-drop habit ordering**, **undo delete**, **dual themes**, and **professional PDF reporting**.
 
 <p align="center">
-  <img src="screenshot.png" width="800" alt="Habit Tracker Dashboard">
+  <img src="screenshot.png" width="850" alt="Habit Tracker Dashboard Preview">
 </p>
 
-## 🚀 Key Features
-### 📅 Advanced Calendar System
-* 365-Day View: A horizontally scrollable grid representing every single day of the year.
+---
 
-* Intuitive Tracking: Toggle habit completion status (Yes/No) with a simple click on the grid.
+## 📌 Table of Contents
 
-* Smart Visualization: Months are visually separated using alternating background colors for easier navigation.
-
-* Today & Weekend Highlighting: The current date is highlighted in yellow, and weekends are marked in red to help you stay oriented.
-
-* Auto-Scroll: On startup, the dashboard automatically scrolls to the current date.
-
-### 📊 Real-Time Analytics
-* KPI Cards: Four high-visibility cards providing instant feedback on your progress:
-
-* Today: Percentage of habits completed for the current day.
-
-* Best Streak: Your longest consecutive run of completing all habits.
-
-* Weekly Avg: Completion percentage over the last 7 days.
-
-* Monthly Avg: Completion percentage over the last 30 days.
-
-* Annual Consistency Trend: A dynamic area-line chart visualizing your progress across the entire year.
-
-* Monthly Breakdown: A bar chart comparing your average success rate month-by-month, featuring percentage labels above each bar.
-
-### 🛠 Habit Management
-* Full CRUD Support: Easily add new habits with specific times, edit existing ones, or delete habits you no longer wish to track.
-
-* Hover-Sensitive Editing: A pencil icon (✏️) appears only when hovering over a habit name for a cleaner UI and quick modifications.
-
-* Persistent Storage: Data is automatically saved to a local JSON file whenever changes are made.
-
-### 🎨 Customization & Export
-* Dual-Theme Engine: Seamlessly switch between Light Mode and Dark Mode. Every element, including graphs, adapts instantly.
-
-* PDF Reporting: Export a professional summary including your current stats and snapshots of both your annual and monthly graphs.
-
-* CSV Export: Generate a detailed spreadsheet containing your daily logs and a summarized performance section.
-
-* Backup & Restore: Export your entire history to a standalone file to prevent data loss or move between devices.
-
-### ⚡ Performance & Stability
-* Anti-Wobble Design: Precisely calculated geometry ensures vertical stability, preventing the interface from "jittering" during horizontal scrolling.
-
-* Shadow Effects: Modern UI with graphical drop shadows on cards and containers for a sleek, layered look.
-
-## 🛠 Tech Stack
-* **Language:** Python 3.x
-
-* **GUI Framework:** PySide6 (Qt for Python)
-
-* **Visualization:** Matplotlib
-
-* **Reporting:** ReportLab (for PDF generation)
-
-* **Data Handling:** JSON, CSV
-
-## 🚀 Installation & Usage
-
-### For Users
-1.  Download the `HTracker.exe` from the [Releases](https://github.com/monu754/Habit-Tracker-/releases) section.
-2.  Run the executable. No Python installation required!
-3. Edit the habits and time-frame according to you by right-clicking on the habit
-
-### For Developers
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/monu754/Habit-Tracker-.git
-    ```
-2.  Install dependencies:
-    ```bash
-    pip install PySide6 matplotlib
-    ```
-3.  Run the application:
-    ```bash
-    python app.py
-    ```
-
-
-
-## ⚖️ License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- [✨ Features](#-features)
+- [📅 Calendar System](#-calendar-system)
+- [📊 Analytics Dashboard](#-analytics-dashboard)
+- [🛠 Habit Management](#-habit-management)
+- [🎨 Themes & UI](#-themes--ui)
+- [📤 Export & Backup](#-export--backup)
+- [⚙️ Installation](#️-installation)
+- [🚀 Usage Guide](#-usage-guide)
+- [🐞 Troubleshooting](#-troubleshooting)
+- [🧱 Tech Stack](#-tech-stack)
+- [📦 Project Structure](#-project-structure)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
 
 ---
-**Developed by Manotosh Mandal**
+
+## ✨ Features
+
+### ✔ Fully interactive habit calendar  
+### ✔ Real-time KPI dashboard  
+### ✔ Annual & monthly trend graphs  
+### ✔ Add / Edit / Delete habits  
+### ✔ Undo delete with animation  
+### ✔ Light & Dark themes  
+### ✔ CSV + PDF exporting  
+### ✔ Backup + Restore  
+### ✔ Persistent local storage  
+### ✔ Drag-and-drop habit reorder  
+
+All features update instantly with smooth animations and optimized rendering.
+
+---
+
+## 📅 Calendar System
+
+The calendar is the core of the app and includes:
+
+- Month-based grid with dynamically calculated days
+- Auto-scrolls to current date on startup
+- Weekends marked in red for clarity
+- Today highlighted with special theming
+- Prevents marking future days
+- Smooth click-to-toggle habit completion
+- Alternating row colors for readability
+- Vertical header includes habit name + time
+- Drag-and-drop reordering of habits
+
+---
+
+## 📊 Analytics Dashboard
+
+### ⭐ Animated KPI Cards:
+- **Today %** – Daily completion performance  
+- **Best Streak** – Longest run of fully completed days  
+- **Weekly Avg (%)** – Last 7 days  
+- **Monthly Avg (%)** – Last 30 days  
+- **Total Days Completed** – Sum for the year  
+
+Each KPI animates smoothly for a polished experience.
+
+---
+
+### 📈 Annual Trend (Line + Fill Chart)
+
+- Full-year day-by-day consistency graph  
+- Dynamic shading & theme-adaptive colors  
+- Month abbreviations on x-axis  
+- Supports both:
+  - Global overview
+  - Individual habit tracking  
+
+---
+
+### 📊 Monthly Breakdown (Bar Chart)
+
+- 12-month performance comparison  
+- Percentage labels auto-adjust based on height  
+- Theme-aware bar colors  
+- Works for both global & single habit stats  
+
+---
+
+## 🛠 Habit Management
+
+### ➕ Add Habit
+- Add habit name + time  
+- Automatically generates history for all months  
+
+### ✏️ Edit Habit
+- Hover-sensitive pencil icon  
+- Update name/time anytime  
+
+### 🗑️ Delete Habit + Undo
+- Confirmation popup  
+- Undo bar slides up with restore option  
+- Restores name, time, and full history  
+
+### ↕ Drag-and-Drop Reordering
+- Move habits up/down  
+- Syncs order across all years  
+- Chart and stats auto-update  
+
+---
+
+## 🎨 Themes & UI
+
+### 🌞 Light Mode
+Bright, clean interface.
+
+### 🌙 Dark Mode
+High-contrast GitHub-style theme.
+
+Everything adapts instantly:
+- Calendar
+- KPI cards
+- Graphs
+- Buttons
+- Undo bar
+- Containers & shadows
+
+---
+
+## 📤 Export & Backup
+
+### 📄 CSV Export
+Exports:
+- All dates of current year  
+- Each habit's daily status (Yes/No)  
+
+### 📑 PDF Export
+Includes:
+- KPI summary  
+- Annual graph  
+- Monthly comparison chart  
+- Auto-generated layout  
+
+### 💾 Backup & Restore
+- Save all data to a single JSON file  
+- Restore anytime  
+- Move between devices easily  
+
+---
+
+## ⚙️ Installation
+
+### ✔ For Users (No Python Needed)
+
+1. Download `HTracker.exe` from the Releases page.
+2. Run the application.
+3. Start tracking instantly.
+
+---
+
+### ✔ For Developers
+
+Clone the repo:
+
+```bash
+    git clone https://github.com/monu754/Habit-Tracker-.git
+```
+
+Install dependencies:
+```bash
+    pip install PySide6 matplotlib reportlab
+```
+
+Run the app:
+```bash
+    python app.py
+```
+
+# 🚀 Usage Guide
+## Add Habit
+
+Use the + Habit button.
+Or right-click → Edit/Delete.
+
+## Toggle Day
+
+Click any cell in the calendar grid.
+
+## View Stats
+
+Use the dropdown to switch between:
+
+* Global Overview
+
+* Specific habit
+
+## Switch Theme
+
+Click the ☀️ / 🌙 toggle button.
+
+## Export Data
+
+Click Export → CSV or PDF.
+
+## Undo Delete
+
+After deleting a habit, click UNDO on the slide-up bar.
