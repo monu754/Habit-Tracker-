@@ -175,30 +175,31 @@ Includes:
 Clone the repo:
 
 ```bash
-    git clone https://github.com/monu754/Habit-Tracker-.git
+git clone https://github.com/monu754/Habit-Tracker-.git
 ```
 
 Install dependencies:
 ```bash
-    pip install PySide6 matplotlib reportlab
+pip install PySide6 matplotlib reportlab
 ```
 
 Run the app:
 ```bash
-    python app.py
+python app.py
 ```
+---
 
-# 🚀 Usage Guide
-## Add Habit
+## 🚀 Usage Guide
+### Add Habit
 
 Use the + Habit button.
 Or right-click → Edit/Delete.
 
-## Toggle Day
+### Toggle Day
 
 Click any cell in the calendar grid.
 
-## View Stats
+### View Stats
 
 Use the dropdown to switch between:
 
@@ -206,19 +207,21 @@ Use the dropdown to switch between:
 
 * Specific habit
 
-## Switch Theme
+### Switch Theme
 
 Click the ☀️ / 🌙 toggle button.
 
-## Export Data
+### Export Data
 
 Click Export → CSV or PDF.
 
-## Undo Delete
+### Undo Delete
 
 After deleting a habit, click UNDO on the slide-up bar.
 
-# 🐞 Troubleshooting
+---
+
+## 🐞 Troubleshooting
 
 | Issue                | Fix                                            |
 | -------------------- | ---------------------------------------------- |
@@ -227,7 +230,9 @@ After deleting a habit, click UNDO on the slide-up bar.
 | CSV/PDF export error | Check folder permissions                       |
 | Undo bar misaligned  | Resize window to reposition it                 |
 
-# 🧱 Tech Stack
+---
+
+## 🧱 Tech Stack
 
 * Python 3.10+
 * PySide6 (Qt for Python)
@@ -235,7 +240,9 @@ After deleting a habit, click UNDO on the slide-up bar.
 * ReportLab
 * JSON / CSV
 
-# 🤝 Contributing
+---
+
+## 🤝 Contributing
 
 Contributions are welcome!
 You can contribute by:
@@ -246,11 +253,15 @@ You can contribute by:
     * Writing documentation
 Submit an Issue or a Pull Request.
 
-# 📜 License
+---
+
+## 📜 License
 
 This project is licensed under the MIT License.
 See the [LICENSE](LICENSE) file for more info.
 
-# 👨‍💻 Author
+---
+
+## 👨‍💻 Author
 
 Developed by: Manotosh Mandal
