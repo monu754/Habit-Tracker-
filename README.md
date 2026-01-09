@@ -28,7 +28,6 @@ The 2026 version introduces a powerful **analytics engine**, **drag-and-drop hab
 - [🚀 Usage Guide](#-usage-guide)
 - [🐞 Troubleshooting](#-troubleshooting)
 - [🧱 Tech Stack](#-tech-stack)
-- [📦 Project Structure](#-project-structure)
 - [🤝 Contributing](#-contributing)
 - [📜 License](#-license)
 
@@ -218,3 +217,40 @@ Click Export → CSV or PDF.
 ## Undo Delete
 
 After deleting a habit, click UNDO on the slide-up bar.
+
+# 🐞 Troubleshooting
+
+| Issue                | Fix                                            |
+| -------------------- | ---------------------------------------------- |
+| App does not open    | Use Python 3.10+ or EXE version                |
+| Graphs not updating  | Change habit filter or click outside the table |
+| CSV/PDF export error | Check folder permissions                       |
+| Undo bar misaligned  | Resize window to reposition it                 |
+
+# 🧱 Tech Stack
+
+* Python 3.10+
+* PySide6 (Qt for Python)
+* Matplotlib
+* ReportLab
+* JSON / CSV
+
+# 🤝 Contributing
+
+Contributions are welcome!
+You can contribute by:
+    * Improving UI/UX
+    * Optimizing performance
+    * Adding new features
+    * Reporting bugs
+    * Writing documentation
+Submit an Issue or a Pull Request.
+
+# 📜 License
+
+This project is licensed under the MIT License.
+See the [LICENSE](LICENSE) file for more info.
+
+# 👨‍💻 Author
+
+Developed by: Manotosh Mandal
