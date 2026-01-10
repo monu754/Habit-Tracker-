@@ -164,9 +164,10 @@ Includes:
 
 ### ✔ For Users (No Python Needed)
 
-1. Download `HTracker.exe` from the Releases page.
-2. Run the application.
-3. Start tracking instantly.
+1. Download `HabitTracker.zip` from the [Release](https://github.com/monu754/Habit-Tracker-/releases) page.
+2. Extract the zip file 
+3. Run the application.
+4. Start tracking instantly.
 
 ---
 
