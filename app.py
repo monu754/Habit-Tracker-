@@ -13,8 +13,6 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QColor, QFont, QAction, QIcon
 
-# NOTE: Matplotlib and ReportLab are imported lazily inside functions to speed up startup
-
 # --- CONFIGURATION ---
 DATA_FILE = "habit_data.json"
 ICON_NAME = "icon.ico" 
@@ -36,7 +34,8 @@ THEME_LIGHT = {
     "btn_filter_bg": "#0EA5E9", "btn_filter_text": "#FFFFFF",
     "row_even": "#FFFFFF", "row_odd": "#F8FAFB",
     "weekend_text": "#D32F2F", "day_text": "#64748B", "date_text": "#1C1F26",
-    "undo_text": "#1C1F26", "undo_btn": "#2E7D32" 
+    "undo_text": "#1C1F26", "undo_btn": "#2E7D32",
+    "clock_text": "#6366F1", "clock_bg": "#EEF2FF", "clock_border": "#E0E7FF"
 }
 
 THEME_DARK = {
@@ -53,7 +52,8 @@ THEME_DARK = {
     "btn_filter_bg": "#1F6FEB", "btn_filter_text": "#FFFFFF",
     "row_even": "#161B22", "row_odd": "#0D1117",
     "weekend_text": "#FF5252", "day_text": "#8B949E", "date_text": "#C9D1D9",
-    "undo_text": "#FFFFFF", "undo_btn": "#58A6FF"
+    "undo_text": "#FFFFFF", "undo_btn": "#58A6FF",
+    "clock_text": "#A5B4FC", "clock_bg": "#1F2937", "clock_border": "#374151"
 }
 
 KPI_STYLES_LIGHT = {
@@ -339,7 +339,6 @@ class HabitApp(QWidget):
         self.selected_habit_idx = None; self._last_deleted_habit = None  
         self.chart_update_timer = QTimer(); self.chart_update_timer.setSingleShot(True); self.chart_update_timer.timeout.connect(self.update_charts_data_only)
         
-        # Init Sequence - charts loaded lazily!
         # Initialize window variables
         self.saved_geometry = None
         self.saved_maximized = False
@@ -347,6 +346,12 @@ class HabitApp(QWidget):
         self.init_data()
         self.setup_ui()
         self.apply_theme()
+        
+        # CLOCK SETUP
+        self.clock_timer = QTimer(self)
+        self.clock_timer.timeout.connect(self.update_clock)
+        self.clock_timer.start(1000)
+        self.update_clock() # Initial Update
         
         # Restore window state
         if self.saved_geometry:
@@ -440,6 +445,11 @@ class HabitApp(QWidget):
         self.lbl_month_display.setAlignment(Qt.AlignCenter); self.lbl_month_display.setFixedSize(160, 38)
         self.btn_next_month = QPushButton("▶"); self.btn_next_month.setFixedSize(40, 38); self.btn_next_month.setCursor(Qt.PointingHandCursor)
         self.btn_next_month.clicked.connect(lambda: self.change_month(1))
+        
+        # --- NEW: CLOCK LABEL ---
+        self.lbl_clock = QLabel("00:00:00")
+        self.lbl_clock.setAlignment(Qt.AlignCenter)
+        self.lbl_clock.setFixedSize(120, 38)
 
         self.btn_add = AnimatedButton(" + Habit ", "#28A745", is_dropdown=False); self.btn_add.clicked.connect(self.add_habit)
         self.btn_export = AnimatedButton("Export", "#7E3AF2", is_dropdown=True)
@@ -450,6 +460,10 @@ class HabitApp(QWidget):
         self.btn_theme = QPushButton(""); self.btn_theme.setFixedSize(38, 38); self.btn_theme.setCursor(Qt.PointingHandCursor); self.btn_theme.clicked.connect(self.toggle_theme)
         
         controls_layout.addWidget(self.btn_prev_month); controls_layout.addWidget(self.lbl_month_display); controls_layout.addWidget(self.btn_next_month)
+        
+        # Add Clock here
+        controls_layout.addWidget(self.lbl_clock)
+        
         controls_layout.addSpacing(20); controls_layout.addWidget(self.btn_add); controls_layout.addWidget(self.btn_export); controls_layout.addWidget(self.btn_theme)
         header_layout.addLayout(title_box); header_layout.addStretch(); header_layout.addLayout(controls_layout)
         self.layout.addWidget(header_frame)
@@ -567,6 +581,10 @@ class HabitApp(QWidget):
         # Now trigger the first update
         self.trigger_full_update()
 
+    def update_clock(self):
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+        self.lbl_clock.setText(current_time)
+
     def resizeEvent(self, event):
         if self.undo_bar.isVisible(): self.undo_bar.move((self.width() - self.undo_bar.width()) - 40, self.height() - 80)
         super().resizeEvent(event)
@@ -616,6 +634,10 @@ class HabitApp(QWidget):
         self.btn_prev_month.setStyleSheet(f"QPushButton {{ {nav_style} }} QPushButton:hover {{ border-color: {theme['text_primary']}; }}")
         self.btn_next_month.setStyleSheet(f"QPushButton {{ {nav_style} }} QPushButton:hover {{ border-color: {theme['text_primary']}; }}")
         self.lbl_month_display.setStyleSheet(f"background-color: {theme['date_badge_bg']}; color: {theme['date_badge_text']}; border: 1px solid {theme['date_badge_border']}; border-radius: 8px; font-weight: 700; font-size: 15px;")
+        
+        # CLOCK STYLING
+        self.lbl_clock.setStyleSheet(f"background-color: {theme['clock_bg']}; color: {theme['clock_text']}; border: 1px solid {theme['clock_border']}; border-radius: 8px; font-weight: 700; font-size: 15px;")
+        
         self.btn_add.update_colors(theme['btn_add'], "#FFFFFF"); self.btn_export.update_colors(theme['btn_export'], "#FFFFFF"); self.btn_habit_filter.update_colors(theme['btn_filter_bg'], theme['btn_filter_text'])
         self.btn_theme.setText("☀️" if self.is_dark_mode else "🌙"); self.btn_theme.setStyleSheet(f"QPushButton {{ background-color: {theme['card']}; border: 1px solid {theme['border']}; border-radius: 19px; font-size: 16px; }} QPushButton:hover {{ border: 1px solid {theme['text_secondary']}; }}")
         for c in [self.grid_container, self.chart_container]: c.setStyleSheet(f"background: {theme['card']}; border: 1px solid {theme['border']}; border-radius: 12px;"); c.setGraphicsEffect(None)
@@ -766,8 +788,16 @@ class HabitApp(QWidget):
     def update_kpis(self):
         stats = self.calculate_stats(self.selected_habit_idx)
         if not stats: return
-        self.card_today.set_value(stats["today"]); self.card_streak.set_value(stats["streak"]); self.card_weekly.set_value(stats["weekly"]); self.card_monthly.set_value(stats["monthly"]); self.card_total.set_value(stats["total"])
 
+        # --- MODIFIED SECTION START ---
+        # Change title based on whether we are viewing Global or Individual stats
+        if self.selected_habit_idx is None:
+            self.card_total.lbl_title.setText("TOTAL TASKS")
+        else:
+            self.card_total.lbl_title.setText("TOTAL DAYS")
+        # --- MODIFIED SECTION END ---
+
+        self.card_today.set_value(stats["today"]); self.card_streak.set_value(stats["streak"]); self.card_weekly.set_value(stats["weekly"]); self.card_monthly.set_value(stats["monthly"]); self.card_total.set_value(stats["total"])
     def update_charts_data_only(self):
         if not hasattr(self, 'ax_annual'): return # Charts not yet loaded
         
