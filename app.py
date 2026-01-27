@@ -755,35 +755,84 @@ class HabitApp(QWidget):
     def calculate_stats(self, habit_idx=None):
         n = len(self.habit_names)
         if n == 0: return {}
-        # Ensure data exists before access
-        self.sanitize_data(self.view_year)
         
-        current_year_data = self.history_data[str(self.view_year)]; days_in_year = len(current_year_data[0]); today = datetime.date.today()
-        today_idx = (today.timetuple().tm_yday - 1) if today.year == self.view_year else (days_in_year - 1 if today.year > self.view_year else -1)
-        if habit_idx is None:
-            today_val = int((sum(current_year_data[r][today_idx] for r in range(n)) / n) * 100) if 0 <= today_idx < days_in_year else 0
-            streak = 0; curr = 0
-            for c in range(days_in_year):
-                if all(current_year_data[r][c] == 1 for r in range(n)): curr += 1; streak = max(streak, curr)
-                else: curr = 0
-            total_days = sum(sum(row) for row in current_year_data)
-            def get_avg(days):
-                if today_idx < 0: return 0
-                start = max(0, today_idx - days + 1); total = n * (today_idx - start + 1)
-                done = sum(sum(current_year_data[r][c] for r in range(n)) for c in range(start, today_idx+1))
-                return int((done/total)*100) if total > 0 else 0
+        # --- 1. SET DATE ANCHORS ---
+        real_today = datetime.date.today()
+        
+        # ref_date follows the UI navigation for Monthly, Total, and Streak cards
+        if self.view_year == real_today.year and self.view_month == real_today.month:
+            ref_date = real_today
         else:
-            row_data = current_year_data[habit_idx]; total_days = sum(row_data); today_val = 100 if (0 <= today_idx < days_in_year and row_data[today_idx] == 1) else 0
-            streak = 0; curr = 0
-            for c in range(days_in_year):
-                if row_data[c] == 1: curr += 1; streak = max(streak, curr)
-                else: curr = 0
-            def get_avg(days):
-                if today_idx < 0: return 0
-                start = max(0, today_idx - days + 1); done = sum(row_data[c] for c in range(start, today_idx+1))
-                return int((done/(today_idx-start+1))*100) if (today_idx-start+1) > 0 else 0
-        return { "today": f"{today_val}%", "streak": f"{streak} Days", "weekly": f"{get_avg(7)}%", "monthly": f"{get_avg(30)}%", "total": f"{total_days}" }
+            last_day = calendar.monthrange(self.view_year, self.view_month)[1]
+            ref_date = datetime.date(self.view_year, self.view_month, last_day)
 
+        # Helper to fetch data safely across different years/months
+        def get_val_on_date(d, h_idx):
+            y_str = str(d.year)
+            # Ensure data exists for the year of the date being checked
+            if y_str not in self.history_data: self.sanitize_data(d.year)
+            
+            day_idx = d.timetuple().tm_yday - 1
+            year_data = self.history_data[y_str]
+            
+            # Bounds check for the day_idx (handles leap years vs non-leap years)
+            if day_idx < 0 or day_idx >= len(year_data[0]):
+                return 0
+
+            if h_idx is None:
+                return sum(year_data[r][day_idx] for r in range(n)) / n if n > 0 else 0
+            return year_data[h_idx][day_idx]
+
+        # --- 2. TODAY CARD (LOCKED TO REAL-WORLD TODAY) ---
+        today_score = get_val_on_date(real_today, habit_idx)
+        today_display = f"{int(today_score * 100)}%"
+
+        # --- 3. WEEKLY AVG (LOCKED TO CURRENT REAL WEEK) ---
+        days_since_monday = real_today.weekday()
+        current_week_vals = []
+        for i in range(days_since_monday + 1):
+            check_date = real_today - datetime.timedelta(days=days_since_monday - i)
+            current_week_vals.append(get_val_on_date(check_date, habit_idx))
+        
+        weekly_avg = int((sum(current_week_vals) / len(current_week_vals)) * 100) if current_week_vals else 0
+
+        # --- 4. MONTHLY AVG (ADAPTIVE TO UI NAVIGATION) ---
+        monthly_vals = []
+        # Calculate from day 1 of viewed month up to the reference date
+        for i in range(1, ref_date.day + 1):
+            check_date = datetime.date(self.view_year, self.view_month, i)
+            monthly_vals.append(get_val_on_date(check_date, habit_idx))
+            
+        monthly_avg = int((sum(monthly_vals) / len(monthly_vals)) * 100) if monthly_vals else 0
+
+        # --- 5. TOTAL & STREAK (ADAPTIVE TO UI NAVIGATION) ---
+        self.sanitize_data(self.view_year)
+        curr_year_data = self.history_data[str(self.view_year)]
+        
+        # Total tasks/days for the viewed year
+        if habit_idx is None:
+            total_count = sum(sum(row) for row in curr_year_data)
+        else:
+            total_count = sum(curr_year_data[habit_idx])
+
+        # Best streak in the viewed year up to the reference date
+        streak = 0; curr = 0
+        ref_idx_limit = ref_date.timetuple().tm_yday
+        for c in range(ref_idx_limit):
+            success = all(curr_year_data[r][c] == 1 for r in range(n)) if habit_idx is None else curr_year_data[habit_idx][c] == 1
+            if success:
+                curr += 1
+                streak = max(streak, curr)
+            else:
+                curr = 0
+
+        return {
+            "today": today_display,       # Always real-world today
+            "streak": f"{streak} Days",   # Context-aware best streak
+            "weekly": f"{weekly_avg}%",   # Always real-world week
+            "monthly": f"{monthly_avg}%", # Context-aware month avg
+            "total": str(total_count)     # Context-aware year total
+        }
     def trigger_full_update(self): self.update_kpis(); self.update_charts_data_only()
     def update_kpis(self):
         stats = self.calculate_stats(self.selected_habit_idx)
